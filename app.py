@@ -114,7 +114,8 @@ elif page == "Data Cleaning":
     df['Quantity'] = df['Quantity'].fillna(1)
     df['Price'] = df['Price'].fillna(df['Order Total'] / df['Quantity'])
     df['Order Total'] = df['Order Total'].fillna(df['Price'] * df['Quantity'])
-
+    df['Price']=df['Price'].fillna(df['Price'].mean(skipna=True))
+    df['Order Total']=df['Order Total'].fillna(df['Order Total'].mean(skipna=True))
     # Fill categorical
     df['Payment Method'] = df['Payment Method'].fillna("Unknown")
     df['Item'] = df['Item'].fillna("Unknown")
@@ -124,6 +125,16 @@ elif page == "Data Cleaning":
 
     st.write("### Missing Values After Cleaning")
     st.table(df.isnull().sum())
+
+    st.markdown("""#### Imputation methods used:
+    1. Numerical columns:
+        - Missing Quantities were imputed with 1
+        - Missing Prices were first imputed with Order Total/Quantity
+        - Missing Order Total were first imputed with Price*Quantity
+        - Remaining missing values were imputed with mean
+    2. Categorical columns:
+        - Missing values are replaced with 'Unknown' 
+             """)
 
     # Feature engineering
     df['Year'] = df['Order Date'].dt.year
@@ -201,7 +212,7 @@ elif page == "Insights":
 
     col1.metric("Total Revenue", f"${filtered_df['Order Total'].sum():,.0f}")
     col2.metric("Avg Order Value", f"${filtered_df['Order Total'].mean():.2f}")
-    col3.metric("Total Orders", len(filtered_df))
+    col3.metric("Total Orders", f"{len(filtered_df):,}")
 
     # ------------------ CHARTS ------------------
 
@@ -231,6 +242,6 @@ elif page == "Insights":
     st.plotly_chart(fig3, use_container_width=True)
 
     st.subheader("Top Items")
-    top_items = filtered_df.groupby("Item")['Order Total'].sum().nlargest(10).sort_values(ascending=False).reset_index()
+    top_items = filtered_df.groupby("Item")['Order Total'].sum().nlargest(10).sort_values(ascending=True).reset_index()
     fig4 = px.bar(top_items, x="Order Total", y="Item", orientation="h")
     st.plotly_chart(fig4, use_container_width=True)
